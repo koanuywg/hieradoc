@@ -200,26 +200,27 @@ class HierarchicalIndexer:
         return tree_branches
 
     def _slice_leaves(self, leaf_heads, clean_lines: List[str], max_line: int) -> List[Dict[str, Any]]:
-        leaves = []
+        raw_leaves = []
         for j, l_head in enumerate(leaf_heads):
             l_start = l_head.line_number
             l_end = leaf_heads[j + 1].line_number - 1 if j + 1 < len(leaf_heads) else max_line
             l_title = l_head.matched_text
             l_content = TextSlicer.slice_by_lines(clean_lines, l_start, l_end)
-            l_summary = HierarchicalSummarizerAgent.summarize_leaf(
-                title=l_title,
-                content_text=l_content,
-                client=self.client,
-                model=self.model
-            )
-            leaves.append({
+            raw_leaves.append({
                 "title": l_title,
-                "summary": l_summary,
                 "content_text": l_content,
                 "start_line": l_start,
                 "end_line": l_end
             })
-        return leaves
+
+        # Concurrent Leaf Summarization
+        summarized = HierarchicalSummarizerAgent.summarize_leaves_concurrent(
+            leaves=raw_leaves,
+            client=self.client,
+            model=self.model,
+            max_workers=8
+        )
+        return summarized
 
     def _process_flat(self, clean_lines: List[str], doc_title: str) -> List[Dict[str, Any]]:
         """

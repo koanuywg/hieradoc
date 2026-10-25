@@ -67,16 +67,12 @@ class RecursiveTreeParserAgent:
                     "summary": "Nội dung chính"
                 }]
 
-        # 2. Phân đoạn theo các heading cấp cao nhất
-        nodes = []
-        for i, match in enumerate(matches):
+        # 2. Phân đoạn theo các heading cấp cao nhất (Đệ quy phân rã đồng thời)
+        def _process_top_heading(i, match):
             start_l = match["line"]
             end_l = matches[i + 1]["line"] - 1 if i + 1 < len(matches) else total_lines
             title = match["title"]
-            node_lines = clean_lines[start_l - 1: end_l]
-
-            # Đệ quy bóc tách phân đoạn con
-            child_node = cls._decompose_segment(
+            return cls._decompose_segment(
                 title=title,
                 clean_lines=clean_lines,
                 start_line=start_l,
@@ -86,7 +82,14 @@ class RecursiveTreeParserAgent:
                 model=model,
                 current_depth=1
             )
-            nodes.append(child_node)
+
+        if len(matches) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=min(len(matches), 6)) as executor:
+                futures = [executor.submit(_process_top_heading, i, m) for i, m in enumerate(matches)]
+                nodes = [f.result() for f in futures]
+        else:
+            nodes = [_process_top_heading(0, matches[0])]
 
         return nodes
 
@@ -171,6 +174,7 @@ class RecursiveTreeParserAgent:
 
         # Base case 2: Đoạn ngắn hoặc không vượt ngưỡng MAX_LEAF_LINES -> Trở thành Leaf nguyên tử
         if num_lines <= cls.MAX_LEAF_LINES:
+            # Tạo Leaf trước, việc summarize có thể thực hiện đồng loạt hoặc ngay tại đây
             summary = HierarchicalSummarizerAgent.summarize_leaf(
                 title=title,
                 content_text=content,

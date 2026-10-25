@@ -1,10 +1,45 @@
 import json
 import os
-from typing import List, Dict, Any, Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import List, Dict, Any, Optional, Tuple
 from openai import OpenAI
 
 class HierarchicalSummarizerAgent:
-    """Bottom-up hierarchical summarizer: Leaf -> Branch -> Document Root."""
+    """Bottom-up hierarchical summarizer: Leaf -> Branch -> Document Root with Concurrent Execution."""
+
+    @classmethod
+    def summarize_leaves_concurrent(
+        cls,
+        leaves: List[Dict[str, Any]],
+        client: Optional[OpenAI] = None,
+        model: str = "gpt-4o-mini",
+        max_workers: int = 8
+    ) -> List[Dict[str, Any]]:
+        """
+        Summarizes a batch of leaf nodes concurrently using ThreadPoolExecutor.
+        Significantly reduces indexing latency from O(N) to O(1) batched waves.
+        """
+        if not leaves:
+            return []
+
+        if client is None:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        def _worker(leaf: Dict[str, Any]) -> Dict[str, Any]:
+            # Nếu đã có summary rồi thì bỏ qua
+            if leaf.get("summary") and len(leaf["summary"]) > 10:
+                return leaf
+            title = leaf.get("title", "")
+            content = leaf.get("content_text") or leaf.get("content", "")
+            summary = cls.summarize_leaf(title=title, content_text=content, client=client, model=model)
+            updated = dict(leaf)
+            updated["summary"] = summary
+            return updated
+
+        with ThreadPoolExecutor(max_workers=min(max_workers, len(leaves))) as executor:
+            summarized_leaves = list(executor.map(_worker, leaves))
+
+        return summarized_leaves
 
     @classmethod
     def summarize_leaf(
