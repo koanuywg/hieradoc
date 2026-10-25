@@ -1,0 +1,7 @@
+openai>=1.20.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+# Optional PDF extraction support:
+# pypdf>=4.0.0
+# Optional Cloud Supabase storage support:
+# supabase>=2.3.0

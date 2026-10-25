@@ -1,0 +1,32 @@
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do - Hạnh phúc
+---
+
+THỎA THUẬN BẢO MẬT THÔNG TIN VÀ AN TOÀN DỮ LIỆU (NDA)
+Số: 01/2026/NDA-TECH
+
+Chương I: ĐỊNH NGHĨA VÀ PHẠM VI BẢO MẬT
+Điều 1. Định nghĩa Thông tin Bảo mật
+1. "Thông tin Bảo mật" bao gồm nhưng không giới hạn ở: toàn bộ mã nguồn phần mềm, kiến trúc hệ thống, dữ liệu khách hàng, tài liệu thiết kế sản phẩm, bí mật kinh doanh, kế hoạch tài chính và chiến lược tiếp thị do Bên Tiết Lộ chuyển giao cho Bên Tiếp Nhận dưới mọi hình thức (văn bản, lời nói, dữ liệu điện tử).
+2. Mọi thông tin được đánh dấu "CONFIDENTIAL" hoặc "BẢO MẬT" mặc nhiên được coi là thông tin bảo mật theo thỏa thuận này.
+
+Điều 2. Các trường hợp Loại trừ
+Nghĩa vụ bảo mật sẽ không áp dụng đối với các thông tin sau đây:
+1. Thông tin đã được phổ biến rộng rãi ra công chúng trước thời điểm tiết lộ mà không do lỗi của Bên Tiếp Nhận;
+2. Thông tin mà Bên Tiếp Nhận đã chứng minh được là đã sở hữu hợp pháp trước khi nhận từ Bên Tiết Lộ;
+3. Thông tin được một bên thứ ba cung cấp hợp pháp mà bên thứ ba đó không bị ràng buộc bởi bất kỳ nghĩa vụ bảo mật nào;
+4. Thông tin bắt buộc phải cung cấp theo phán quyết của Tòa án hoặc cơ quan nhà nước có thẩm quyền theo quy định của pháp luật Việt Nam.
+
+Chương II: NGHĨA VỤ VÀ TRÁCH NHIỆM BỒI THƯỜNG
+Điều 3. Nghĩa vụ bảo vệ và thời hạn bảo mật
+1. Bên Tiếp Nhận cam kết áp dụng các biện pháp an ninh kỹ thuật và quản lý đạt chuẩn tối thiểu ISO/IEC 27001 để ngăn chặn mọi hành vi truy cập, sao chép hoặc phân phối trái phép thông tin bảo mật.
+2. Thời hạn bảo mật thông tin được các bên cam kết duy trì trong suốt thời gian hợp tác và kéo dài 05 (năm) năm kể từ ngày thỏa thuận này chấm dứt hoặc hết hiệu lực vì bất kỳ lý do gì.
+
+Điều 4. Chế tài phạt vi phạm và bồi thường thiệt hại
+1. Trường hợp Bên Tiếp Nhận có hành vi làm lộ, rò rỉ hoặc sử dụng trái phép thông tin bảo mật cho mục đích riêng, Bên Tiếp Nhận phải nộp một khoản tiền phạt vi phạm hợp đồng tương đương 500.000.000 VNĐ (năm trăm triệu đồng) cho mỗi lần vi phạm.
+2. Ngoài khoản phạt vi phạm nêu trên, Bên Tiếp Nhận có trách nhiệm bồi thường 100% toàn bộ thiệt hại thực tế phát sinh cho Bên Tiết Lộ, bao gồm cả chi phí luật sư và án phí nếu có tranh chấp phát sinh.
+
+Chương III: HIỆU LỰC THI HÀNH
+Điều 5. Điều khoản chung và giải quyết tranh chấp
+1. Thỏa thuận này có hiệu lực kể từ ngày ký và được điều chỉnh bởi pháp luật nước Cộng hòa Xã hội Chủ nghĩa Việt Nam.
+2. Mọi tranh chấp phát sinh từ hoặc liên quan đến thỏa thuận này trước hết sẽ được giải quyết thông qua thương lượng hòa giải. Nếu không đạt được thỏa thuận trong vòng 30 ngày, tranh chấp sẽ được đưa ra Trung tâm Trọng tài Quốc tế Việt Nam (VIAC) để giải quyết.
