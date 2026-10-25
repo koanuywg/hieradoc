@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 class HeadingCandidate(BaseModel):
@@ -12,9 +12,23 @@ class DocumentBlueprint(BaseModel):
     document_type: str = Field(..., description="Type of document, e.g. contract, sla, policy, essay")
     detected_language: str = Field(..., description="Primary language e.g. vi, en")
     has_explicit_headings: bool = Field(..., description="True if document has structured chapters/articles")
+    hierarchy_levels: List[str] = Field(
+        default_factory=lambda: ["Chương", "Điều", "Khoản", "Điểm"],
+        description="Names of hierarchy levels from top to bottom"
+    )
     level_1_pattern: Optional[str] = Field(None, description="Regex pattern for Level 1 headings (e.g. Chương/PART)")
     level_2_pattern: Optional[str] = Field(None, description="Regex pattern for Level 2 headings (e.g. Điều/ARTICLE)")
     level_3_pattern: Optional[str] = Field(None, description="Regex pattern for Level 3 headings")
+    level_4_pattern: Optional[str] = Field(None, description="Regex pattern for Level 4 headings")
+
+class TreeNodePayload(BaseModel):
+    title: str
+    node_type: Literal["branch", "leaf"]
+    summary: Optional[str] = None
+    content_text: Optional[str] = None
+    start_line: Optional[int] = None
+    end_line: Optional[int] = None
+    children: List["TreeNodePayload"] = Field(default_factory=list)
 
 class TreeNode(BaseModel):
     id: str

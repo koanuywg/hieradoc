@@ -17,17 +17,19 @@ class DocumentInspectorAgent:
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         system_prompt = """
-        You are a Document Structure Architect.
+        You are an expert Document Structure Architect with deep understanding of international and Vietnamese legal/contractual hierarchies.
         Tasks:
         1. Read the sample text (with line numbers [L0001]...).
-        2. Detect the main document title, document type (contract, policy, report, manual, etc.), and primary language (vi, en, etc.).
+        2. Detect the main document title, document type (contract, policy, legal code, standard, SLA, etc.), and primary language (vi, en, etc.).
         3. Determine whether the document has an explicit hierarchical heading system (has_explicit_headings).
-           - True: Legal codes, policies, contracts, SLAs (with Chapters/Articles, Parts/Sections, 1./1.1...).
-           - False: Essays, stories, continuous narrative prose.
-        4. IF STRUCTURED: Generate exact Python Regex Patterns to match heading lines at the start of line (^):
+           - True: Legal codes, policies, contracts, technical specifications (with Chapters/Articles, Parts/Sections, 1./1.1, Clauses, Points...).
+           - False: Essays, stories, continuous narrative prose without numbered sections.
+        4. IF STRUCTURED: Detect all hierarchical levels and generate Python Regex Patterns for each level:
+           - hierarchy_levels: Ordered list of level names (e.g. ["Chương", "Điều", "Khoản", "Điểm"] or ["Part", "Article", "Section", "Clause"] or ["Heading 1", "Heading 2", "Heading 3"]).
            - level_1_pattern: Top-level headers (e.g. ^(Chương|CHƯƠNG|PART|SECTION|PHẦN)\s+[IVX0-9]+).
            - level_2_pattern: Second-level headers (e.g. ^(Điều|ARTICLE|ĐIỀU)\s+[0-9]+).
-           - level_3_pattern: Third-level headers if applicable (e.g. ^[0-9]+\.[0-9]+).
+           - level_3_pattern: Third-level headers if applicable (e.g. ^(Khoản\s+\d+|\d+\.) or ^\d+\.\d+).
+           - level_4_pattern: Fourth-level headers if applicable (e.g. ^(Điểm\s+[a-z]|[a-z]\)) or ^\d+\.\d+\.\d+).
         """
 
         response = client.beta.chat.completions.parse(

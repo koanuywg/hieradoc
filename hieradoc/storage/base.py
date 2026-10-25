@@ -13,8 +13,25 @@ class BaseTreeStorage(ABC):
         tree_data: List[Dict[str, Any]],
         cluster_title: str = "Tài Liệu Chung"
     ) -> Dict[str, Any]:
-        """Save a hierarchical document tree structure into storage."""
+        """Save a hierarchical document tree structure into storage (supports flat or recursive nested dictionaries)."""
         pass
+
+    def save_recursive_tree(
+        self,
+        doc_id: str,
+        title: str,
+        summary: str,
+        roots: List[Dict[str, Any]],
+        cluster_title: str = "Tài Liệu Chung"
+    ) -> Dict[str, Any]:
+        """Save an arbitrary N-depth recursive tree structure into storage."""
+        return self.save_document_tree(
+            doc_id=doc_id,
+            title=title,
+            summary=summary,
+            tree_data=roots,
+            cluster_title=cluster_title
+        )
 
     @abstractmethod
     def explore_node(self, node_id: Optional[str] = None) -> List[Dict[str, Any]]:

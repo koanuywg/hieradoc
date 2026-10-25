@@ -101,35 +101,53 @@ class SQLiteTreeStorage(BaseTreeStorage):
                 VALUES (?, ?, ?, 'document', ?, ?, 0)
             """, (doc_node_id, db_doc_id, cluster_id, title, summary))
 
-            # 4. Lưu các Nhánh (Branches) và Node Lá (Leaves)
-            for b_idx, branch in enumerate(tree_data):
-                branch_node_id = str(uuid.uuid4())
-                b_title = branch.get("chapter_title") or branch.get("branch_title") or f"Nhánh {b_idx + 1}"
-                b_summary = branch.get("summary") or ""
+            # 4. Lưu các Nhánh (Branches) và Node Lá (Leaves) theo cơ chế Đệ Quy N-tầng
+            def _insert_recursive(parent_db_id: str, node_dict: Dict[str, Any], idx: int):
+                node_id = str(uuid.uuid4())
+                node_type = node_dict.get("node_type")
+                # Nếu không ghi rõ node_type, suy luận: có 'children' hoặc 'articles'/'leaves' thì là 'branch'
+                has_children = bool(
+                    node_dict.get("children") or 
+                    node_dict.get("articles") or 
+                    node_dict.get("leaves")
+                )
+                if not node_type:
+                    node_type = "branch" if has_children else "leaf"
+
+                title = (
+                    node_dict.get("title") or 
+                    node_dict.get("branch_title") or 
+                    node_dict.get("chapter_title") or 
+                    f"Mục {idx + 1}"
+                )
+                summary = node_dict.get("summary") or ""
+                content = node_dict.get("content_text") or node_dict.get("content") or ""
+                start_l = node_dict.get("start_line")
+                end_l = node_dict.get("end_line")
+
                 cursor.execute("""
-                    INSERT INTO tree_nodes (id, document_id, parent_id, node_type, title, summary, node_index)
-                    VALUES (?, ?, ?, 'branch', ?, ?, ?)
-                """, (branch_node_id, db_doc_id, doc_node_id, b_title, b_summary, b_idx))
+                    INSERT INTO tree_nodes (
+                        id, document_id, parent_id, node_type, title, summary,
+                        content_text, start_line, end_line, node_index
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    node_id, db_doc_id, parent_db_id, node_type, title, summary,
+                    content, start_l, end_l, idx
+                ))
 
-                articles = branch.get("articles") or branch.get("leaves") or []
-                for a_idx, leaf in enumerate(articles):
-                    leaf_node_id = str(uuid.uuid4())
-                    l_title = leaf.get("title") or f"Mục {a_idx + 1}"
-                    l_summary = leaf.get("summary") or ""
-                    l_content = leaf.get("content_text") or leaf.get("content") or ""
-                    l_start = leaf.get("start_line")
-                    l_end = leaf.get("end_line")
+                # Đệ quy cho toàn bộ children
+                children = (
+                    node_dict.get("children") or 
+                    node_dict.get("articles") or 
+                    node_dict.get("leaves") or 
+                    []
+                )
+                for c_idx, child in enumerate(children):
+                    _insert_recursive(node_id, child, c_idx)
 
-                    cursor.execute("""
-                        INSERT INTO tree_nodes (
-                            id, document_id, parent_id, node_type, title, summary, 
-                            content_text, start_line, end_line, node_index
-                        )
-                        VALUES (?, ?, ?, 'leaf', ?, ?, ?, ?, ?, ?)
-                    """, (
-                        leaf_node_id, db_doc_id, branch_node_id, l_title, l_summary,
-                        l_content, l_start, l_end, a_idx
-                    ))
+            for b_idx, branch in enumerate(tree_data):
+                _insert_recursive(doc_node_id, branch, b_idx)
 
             conn.commit()
             return {"document_id": db_doc_id, "cluster_id": cluster_id, "title": title}

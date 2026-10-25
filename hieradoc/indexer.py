@@ -10,6 +10,7 @@ from hieradoc.tools.text_slicer import TextSlicer
 from hieradoc.tools.boundary_detector import SemanticBoundaryDetector
 from hieradoc.agents.document_inspector import DocumentInspectorAgent
 from hieradoc.agents.hierarchical_summarizer import HierarchicalSummarizerAgent
+from hieradoc.agents.recursive_tree_parser import RecursiveTreeParserAgent
 
 class HierarchicalIndexer:
     """
@@ -69,23 +70,36 @@ class HierarchicalIndexer:
 
         # 2. Extract Hierarchical Tree
         if blueprint.has_explicit_headings:
-            tree_data = self._process_structured(clean_lines, blueprint)
+            patterns = [
+                p for p in [
+                    blueprint.level_1_pattern,
+                    blueprint.level_2_pattern,
+                    blueprint.level_3_pattern,
+                    blueprint.level_4_pattern
+                ] if p
+            ]
+            tree_data = RecursiveTreeParserAgent.parse_document_recursively(
+                clean_lines=clean_lines,
+                level_patterns=patterns,
+                client=self.client,
+                model=self.model
+            )
         else:
             tree_data = self._process_flat(clean_lines, doc_title)
 
         # 3. Summarize Root Document
-        chapters_overview = [
-            {"branch_title": chap["branch_title"], "summary": chap["summary"]}
-            for chap in tree_data
+        top_overview = [
+            {"branch_title": node.get("title") or node.get("branch_title", "Phần"), "summary": node.get("summary", "")}
+            for node in tree_data
         ]
         doc_summary = HierarchicalSummarizerAgent.summarize_root(
             doc_title=doc_title,
-            chapters_overview=chapters_overview,
+            chapters_overview=top_overview,
             client=self.client,
             model=self.model
         )
 
-        # 4. Save into Storage Adapter (SQLite or Supabase)
+        # 4. Save into Storage Adapter (SQLite or Supabase) with recursive support
         save_res = self.storage.save_document_tree(
             doc_id=doc_id,
             title=doc_title,
@@ -94,7 +108,16 @@ class HierarchicalIndexer:
             cluster_title=cluster_title
         )
 
-        total_leaves = sum(len(c.get("articles", [])) for c in tree_data)
+        def _count_leaves(nodes_list):
+            count = 0
+            for n in nodes_list:
+                if n.get("node_type") == "leaf":
+                    count += 1
+                ch = n.get("children") or n.get("articles") or n.get("leaves") or []
+                count += _count_leaves(ch)
+            return count
+
+        total_leaves = _count_leaves(tree_data)
         return {
             "doc_id": doc_id,
             "title": doc_title,
