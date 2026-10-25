@@ -5,14 +5,18 @@ from hieradoc.storage.sqlite import SQLiteTreeStorage
 from hieradoc.indexer import HierarchicalIndexer
 from hieradoc.agents.query_agent import TreeQueryAgent
 from hieradoc.agents.parallel_agent import ParallelTreeAgent
+from hieradoc.agents.critic import TreeCriticAgent
+from hieradoc.tools.sandbox import PythonSandbox
 from hieradoc.schemas.query import QueryRequest, QueryResponse, Citation
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 __all__ = [
     "HieraDoc",
     "HierarchicalIndexer",
     "TreeQueryAgent",
     "ParallelTreeAgent",
+    "TreeCriticAgent",
+    "PythonSandbox",
     "BaseTreeStorage",
     "SQLiteTreeStorage",
     "QueryRequest",

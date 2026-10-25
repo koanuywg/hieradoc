@@ -132,7 +132,9 @@ response = engine.query(
 
 1. **Master Dispatcher**: Evaluates query scope and assigns candidate subtrees to independent worker threads.
 2. **Concurrent Workers**: Sub-Agents explore assigned branches simultaneously via `ThreadPoolExecutor` (reducing wall-clock latency by 50%+).
-3. **Evidence Aggregation & Deduplication**: Merges leaf evidence before running strict zero-hallucination synthesis.
+3. **Balanced Tree Critic**: Sub-Agents evaluate retrieved evidence in a single-pass reflection (`FULFILLED`, `CROSS_REFERENCE`, `PARTIAL`). If a clause refers to another article (e.g., *"pursuant to Article 4"*), the Critic automatically follows the reference.
+4. **Structured Table & Arithmetic Verification**: Preserves 2D markdown tables with line coordinates and executes mathematical calculations via an isolated Python Sandbox tool.
+5. **Evidence Aggregation & Deduplication**: Merges leaf evidence before running strict zero-hallucination synthesis.
 
 ---
 

@@ -1,0 +1,23 @@
+QUY CHẾ DỊCH VỤ ĐÁM MÂY VÀ CHÍNH SÁCH BỒI THƯỜNG TÀI CHÍNH (SLA)
+Mã tài liệu: FIN-SLA-2026
+
+Chương I: CAM KẾT CHẤT LƯỢNG VÀ BẢNG TỶ LỆ HOÀN PHÍ
+Điều 1. Bảng Cam Kết Mức Độ Khả Dụng Uptime và Mức Phạt
+Nhà cung cấp cam kết duy trì tỷ lệ hoạt động của hệ thống máy chủ. Trường hợp không đạt chỉ số, mức bồi hoàn được áp dụng theo bảng định lượng sau:
+
+| Mức Độ Uptime Hàng Tháng | Tỷ Lệ Hoàn Phí (Service Credit) | Tiền Phạt Bổ Sung Cố Định |
+| :--- | :--- | :--- |
+| Từ 99.0% đến 99.94% | 20% phí hàng tháng | 0 USD |
+| Từ 95.0% đến 98.99% | 40% phí hàng tháng | 5000 USD |
+| Dưới 95.0% | 70% phí hàng tháng | 15000 USD |
+
+Điều 2. Dẫn chiếu Thủ tục Khiếu nại Bồi hoàn
+Khách hàng có quyền yêu cầu bồi thường theo tỷ lệ quy định tại Điều 1. Tuy nhiên, mọi thủ tục nộp hồ sơ khiếu nại và thời hạn hoàn tiền bắt buộc phải thực hiện theo quy định tại Điều 4 (Thủ tục giải quyết tranh chấp tài chính).
+
+Chương II: THỦ TỤC VÀ GIẢI QUYẾT TRANH CHẤP
+Điều 3. Các trường hợp miễn trừ trách nhiệm
+Nhà cung cấp không phải chịu trách nhiệm hoàn phí nếu sự cố phát sinh do thiên tai bất khả kháng hoặc do lỗi cấu hình trực tiếp từ phía người quản trị của khách hàng.
+
+Điều 4. Thủ tục giải quyết tranh chấp tài chính
+1. Khách hàng phải gửi văn bản đề nghị bồi hoàn chính thức trong thời hạn tối đa 14 ngày làm việc kể từ ngày sự cố gián đoạn dịch vụ xảy ra.
+2. Nhà cung cấp có nghĩa vụ xác minh kỹ thuật và hoàn trả toàn bộ số tiền phạt bồi hoàn vào hóa đơn dịch vụ của kỳ thanh toán kế tiếp trong thời hạn tối đa 30 ngày.

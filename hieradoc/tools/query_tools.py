@@ -85,6 +85,27 @@ UNIVERSAL_QUERY_TOOLS = [
                 "required": ["branch_id"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "execute_python_calc",
+            "description": (
+                "Execute a short Python calculation snippet in an isolated sandbox. "
+                "Use this whenever calculating mathematical penalties, interest rates, percentages, "
+                "or sums from tables to guarantee 100% arithmetic accuracy."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "Python expression or calculation code to execute (e.g. '20000 * 0.20' or 'sum([10, 15, 20])')."
+                    }
+                },
+                "required": ["code"]
+            }
+        }
     }
 ]
 
@@ -118,6 +139,12 @@ class UniversalToolExecutor:
                 if not b_id:
                     return json.dumps({"error": "Missing branch_id parameter"})
                 res = self.storage.read_branch_full(b_id)
+                return json.dumps(res, ensure_ascii=False)
+
+            elif func_name == "execute_python_calc":
+                from hieradoc.tools.sandbox import PythonSandbox
+                code = args.get("code", "")
+                res = PythonSandbox.execute_code(code)
                 return json.dumps(res, ensure_ascii=False)
 
             return json.dumps({"error": f"Unknown tool function: {func_name}"})

@@ -7,6 +7,7 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 from hieradoc.storage.base import BaseTreeStorage
 from hieradoc.agents.synthesizer import QuerySynthesizer
+from hieradoc.agents.critic import TreeCriticAgent, CritiqueVerdict
 from hieradoc.schemas.query import QueryRequest, QueryResponse
 
 class BranchCandidate(BaseModel):
@@ -101,12 +102,44 @@ class BranchSubAgent:
                 except Exception:
                     candidate_leaves_to_read = child_leaves[:2]
 
-            # Đọc nội dung nguyên văn các lá được chọn
+            # Đọc nội dung nguyên văn các lá được chọn và thẩm định qua Tree Critic
             for leaf in candidate_leaves_to_read:
                 leaf_data = self.storage.read_leaf(leaf["id"])
                 if "content" in leaf_data and leaf_data["content"]:
                     collected_evidences.append(leaf_data)
                     traversal_logs.append(f"[SubAgent: {branch_title}] Read leaf '{leaf['title']}' (Lines {leaf_data.get('start_line')}-{leaf_data.get('end_line')})")
+
+                    # BALANCED TREE CRITIC: Thẩm định nhanh chất lượng bằng chứng
+                    critique = TreeCriticAgent.critique_evidence(
+                        objective=objective,
+                        leaf_data=leaf_data,
+                        client=self.client,
+                        model=self.model
+                    )
+                    traversal_logs.append(f"[Critic: {leaf['title']}] Verdict: {critique.verdict.value} (Score: {critique.confidence_score}) - {critique.reasoning}")
+
+                    # Hành động 1: Dẫn chiếu chéo (Cross-Reference) -> Tự động đi tiếp đến Điều được dẫn chiếu
+                    if critique.verdict == CritiqueVerdict.CROSS_REFERENCE and critique.target_reference:
+                        traversal_logs.append(f"[Critic Action] Following cross-reference to '{critique.target_reference}'...")
+                        ref_matches = self.storage.search_keyword(critique.target_reference, limit=2)
+                        for ref_m in ref_matches:
+                            if ref_m.get("node_type") == "leaf" and ref_m["id"] != leaf["id"]:
+                                ref_data = self.storage.read_leaf(ref_m["id"])
+                                if "content" in ref_data and ref_data["content"]:
+                                    collected_evidences.append(ref_data)
+                                    traversal_logs.append(f"[SubAgent: Followed Ref] Read '{ref_data.get('title')}' (Lines {ref_data.get('start_line')}-{ref_data.get('end_line')})")
+                                    break
+
+                    # Hành động 2: Thiếu vế sau (Partial) -> Tự động đọc thêm lá liền kề
+                    elif critique.verdict == CritiqueVerdict.PARTIAL and critique.suggested_action == "read_neighbor":
+                        curr_indices = [idx for idx, l in enumerate(child_leaves) if l["id"] == leaf["id"]]
+                        if curr_indices and curr_indices[0] + 1 < len(child_leaves):
+                            neighbor_leaf = child_leaves[curr_indices[0] + 1]
+                            traversal_logs.append(f"[Critic Action] Expanding to neighbor leaf '{neighbor_leaf['title']}'...")
+                            neighbor_data = self.storage.read_leaf(neighbor_leaf["id"])
+                            if "content" in neighbor_data and neighbor_data["content"]:
+                                collected_evidences.append(neighbor_data)
+                                traversal_logs.append(f"[SubAgent: Neighbor] Read '{neighbor_data.get('title')}' (Lines {neighbor_data.get('start_line')}-{neighbor_data.get('end_line')})")
 
         # Nếu có sub-branches con (ví dụ Document -> Branch -> Leaf), đệ quy đào sâu
         for s_branch in child_branches[:2]:
