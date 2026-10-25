@@ -48,6 +48,23 @@ class BaseTreeStorage(ABC):
         pass
 
     @abstractmethod
+    def read_branch_full(self, branch_id: str) -> Dict[str, Any]:
+        """
+        Read the entire contiguous text of all child leaves in a branch in one call (Parent Rollup).
+        Returns: {
+            'branch_id': str,
+            'title': str,
+            'doc_title': str,
+            'summary': str,
+            'content': str,
+            'start_line': int,
+            'end_line': int,
+            'leaves_count': int
+        }
+        """
+        pass
+
+    @abstractmethod
     def list_documents(self) -> List[Dict[str, Any]]:
         """List all indexed documents with summary overview."""
         pass

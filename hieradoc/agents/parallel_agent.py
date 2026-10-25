@@ -13,6 +13,11 @@ class BranchCandidate(BaseModel):
     branch_id: str = Field(..., description="ID of the candidate branch/node to explore")
     branch_title: str = Field(..., description="Title of the branch")
     focus_objective: str = Field(..., description="Specific objective for the sub-agent exploring this branch")
+    rollup_full_branch: bool = Field(False, description="True if sub-agent should read the entire branch at once (Parent Rollup)")
+
+class QueryExpansion(BaseModel):
+    expanded_terms: List[str] = Field(..., description="3 to 5 domain synonyms, related legal/technical terms, or conceptual variations")
+    intent_summary: str = Field(..., description="Core underlying user intent")
 
 class DispatcherDecision(BaseModel):
     reasoning: str = Field(..., description="Why these branches were selected for parallel exploration")
@@ -29,9 +34,22 @@ class BranchSubAgent:
         self.client = client
         self.model = model
 
-    def explore_branch(self, branch_id: str, branch_title: str, objective: str) -> Dict[str, Any]:
+    def explore_branch(self, branch_id: str, branch_title: str, objective: str, rollup_full_branch: bool = False) -> Dict[str, Any]:
         traversal_logs = [f"[SubAgent: {branch_title}] Started exploration for objective: '{objective}'"]
         collected_evidences = []
+
+        # Parent Rollup: Nếu được yêu cầu đọc trọn vẹn cả Chương/Nhánh
+        if rollup_full_branch:
+            full_res = self.storage.read_branch_full(branch_id)
+            if "content" in full_res and full_res["content"]:
+                collected_evidences.append(full_res)
+                traversal_logs.append(f"[SubAgent: {branch_title}] Rolled up entire branch ({full_res.get('leaves_count', 0)} leaves, Lines {full_res.get('start_line')}-{full_res.get('end_line')})")
+                return {
+                    "branch_id": branch_id,
+                    "branch_title": branch_title,
+                    "evidences": collected_evidences,
+                    "traversal_logs": traversal_logs
+                }
 
         # 1. Khảo sát các node con của nhánh này
         children = self.storage.explore_node(branch_id)
@@ -133,12 +151,35 @@ class ParallelTreeAgent:
         total_tokens = 0
 
         # ==============================================================
-        # BƯỚC 1: MASTER DISPATCHER - KHẢO SÁT & CHỌN CÁC NHÁNH ĐỂ PHÂN LUỒNG
+        # BƯỚC 1: MASTER DISPATCHER - AGENTIC QUERY EXPANSION & ROUTING
         # ==============================================================
-        step_1_start = time.time()
-        
-        # 1.1 Tìm kiếm các nhánh ứng viên qua keyword
-        keyword_matches = self.storage.search_keyword(request.query, limit=8)
+        # 1.0 Agentic Query Expansion: Master Agent mở rộng từ đồng nghĩa trước khi truy vấn storage
+        exp_prompt = """
+        You are an Expert Semantic Query Expander for Hierarchical Document Intelligence.
+        Analyze the user's query and generate 3 to 5 domain synonyms, technical keywords, 
+        or legal terminology variations that capture the underlying semantic intent.
+        """
+        exp_resp = self.client.beta.chat.completions.parse(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": exp_prompt},
+                {"role": "user", "content": f"User Query: {request.query}"}
+            ],
+            response_format=QueryExpansion,
+            temperature=0.0
+        )
+        expanded: QueryExpansion = exp_resp.choices[0].message.parsed
+        if exp_resp.usage:
+            total_tokens += (exp_resp.usage.prompt_tokens + exp_resp.usage.completion_tokens)
+
+        traversal_path.append(f"Master Agentic Expansion: {expanded.expanded_terms}")
+
+        # 1.1 Tìm kiếm các nhánh ứng viên qua tập từ khóa mở rộng đa dạng (Multi-keyword retrieval)
+        search_terms = [request.query] + (expanded.expanded_terms if expanded else [])
+        keyword_matches = []
+        for term in search_terms[:5]:
+            m_list = self.storage.search_keyword(term, limit=4)
+            keyword_matches.extend(m_list)
         
         # 1.2 Khảo sát các Cụm Gốc / Văn Bản
         root_nodes = self.storage.explore_node(None)
@@ -212,7 +253,8 @@ class ParallelTreeAgent:
             return sub_agent.explore_branch(
                 branch_id=candidate.branch_id,
                 branch_title=candidate.branch_title,
-                objective=candidate.focus_objective
+                objective=candidate.focus_objective,
+                rollup_full_branch=candidate.rollup_full_branch
             )
 
         workers_count = min(len(decision.selected_branches), self.max_parallel_workers)

@@ -65,6 +65,26 @@ UNIVERSAL_QUERY_TOOLS = [
                 "required": ["leaf_node_id"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_branch_full",
+            "description": (
+                "Read the entire contiguous text of an entire Branch/Chapter in one call (Parent Rollup). "
+                "Use this when the query asks for broad procedures, comprehensive policies, or multiple contiguous articles."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "branch_id": {
+                        "type": "string",
+                        "description": "ID of the branch/chapter to read in its entirety."
+                    }
+                },
+                "required": ["branch_id"]
+            }
+        }
     }
 ]
 
@@ -91,6 +111,13 @@ class UniversalToolExecutor:
                 if not leaf_id:
                     return json.dumps({"error": "Missing leaf_node_id parameter"})
                 res = self.storage.read_leaf(leaf_id)
+                return json.dumps(res, ensure_ascii=False)
+
+            elif func_name == "read_branch_full":
+                b_id = args.get("branch_id")
+                if not b_id:
+                    return json.dumps({"error": "Missing branch_id parameter"})
+                res = self.storage.read_branch_full(b_id)
                 return json.dumps(res, ensure_ascii=False)
 
             return json.dumps({"error": f"Unknown tool function: {func_name}"})

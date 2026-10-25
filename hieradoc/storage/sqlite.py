@@ -262,6 +262,61 @@ class SQLiteTreeStorage(BaseTreeStorage):
                 "end_line": leaf["end_line"]
             }
 
+    def read_branch_full(self, branch_id: str) -> Dict[str, Any]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, document_id, title, summary
+                FROM tree_nodes
+                WHERE id = ?
+            """, (branch_id,))
+            branch = cursor.fetchone()
+            if not branch:
+                return {"error": f"Không tìm thấy branch ID {branch_id}"}
+
+            doc_title = "Văn bản"
+            if branch["document_id"]:
+                cursor.execute("SELECT title FROM documents WHERE id = ?", (branch["document_id"],))
+                d_row = cursor.fetchone()
+                if d_row:
+                    doc_title = d_row["title"]
+
+            # Lấy toàn bộ leaves con của branch này
+            cursor.execute("""
+                SELECT id, title, content_text, start_line, end_line
+                FROM tree_nodes
+                WHERE parent_id = ?
+                ORDER BY node_index ASC
+            """, (branch_id,))
+            leaves = cursor.fetchall()
+            if not leaves:
+                return {"error": f"Nhánh {branch_id} không có node con"}
+
+            full_texts = []
+            min_line = None
+            max_line = None
+
+            for l in leaves:
+                t = l["content_text"] or ""
+                if t:
+                    full_texts.append(f"### {l['title']}\n{t}")
+                if l["start_line"] is not None:
+                    min_line = l["start_line"] if min_line is None else min(min_line, l["start_line"])
+                if l["end_line"] is not None:
+                    max_line = l["end_line"] if max_line is None else max(max_line, l["end_line"])
+
+            return {
+                "branch_id": branch["id"],
+                "title": branch["title"],
+                "doc_title": doc_title,
+                "branch_title": branch["title"],
+                "summary": branch["summary"] or "",
+                "content": "\n\n".join(full_texts),
+                "start_line": min_line,
+                "end_line": max_line,
+                "leaves_count": len(leaves)
+            }
+
     def list_documents(self) -> List[Dict[str, Any]]:
         with self._get_connection() as conn:
             cursor = conn.cursor()

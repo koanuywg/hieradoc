@@ -7,6 +7,7 @@ from hieradoc.storage.base import BaseTreeStorage
 from hieradoc.core.extractor import FileExtractor
 from hieradoc.tools.layout_scanner import LayoutScanner
 from hieradoc.tools.text_slicer import TextSlicer
+from hieradoc.tools.boundary_detector import SemanticBoundaryDetector
 from hieradoc.agents.document_inspector import DocumentInspectorAgent
 from hieradoc.agents.hierarchical_summarizer import HierarchicalSummarizerAgent
 
@@ -198,28 +199,25 @@ class HierarchicalIndexer:
         return leaves
 
     def _process_flat(self, clean_lines: List[str], doc_title: str) -> List[Dict[str, Any]]:
-        # Chia văn xuôi theo từng khối 40 dòng
-        chunk_size = 40
-        total_lines = len(clean_lines)
-        leaves = []
+        """
+        Segments unstructured/flat documents using Semantic Topic Shift detection
+        instead of mechanical line slicing. Preserves natural topic coherence.
+        """
+        sections = SemanticBoundaryDetector.segment_text(
+            clean_lines=clean_lines,
+            client=self.client,
+            model=self.model
+        )
 
-        for i in range(0, total_lines, chunk_size):
-            s_line = i + 1
-            e_line = min(total_lines, i + chunk_size)
-            chunk_content = TextSlicer.slice_by_lines(clean_lines, s_line, e_line)
-            l_title = f"Đoạn văn Dòng L{s_line:04d} - L{e_line:04d}"
-            l_summary = HierarchicalSummarizerAgent.summarize_leaf(
-                title=l_title,
-                content_text=chunk_content,
-                client=self.client,
-                model=self.model
-            )
+        leaves = []
+        for sec in sections:
+            chunk_content = TextSlicer.slice_by_lines(clean_lines, sec.start_line, sec.end_line)
             leaves.append({
-                "title": l_title,
-                "summary": l_summary,
+                "title": sec.title,
+                "summary": sec.summary,
                 "content_text": chunk_content,
-                "start_line": s_line,
-                "end_line": e_line
+                "start_line": sec.start_line,
+                "end_line": sec.end_line
             })
 
         b_summary = HierarchicalSummarizerAgent.summarize_branch(
@@ -229,7 +227,7 @@ class HierarchicalIndexer:
             model=self.model
         )
         return [{
-            "branch_title": f"Nội Dung: {doc_title}",
+            "branch_title": f"Chủ Đề Chính: {doc_title}",
             "summary": b_summary,
             "articles": leaves
         }]
