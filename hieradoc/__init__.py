@@ -7,14 +7,16 @@ from hieradoc.agents.query_agent import TreeQueryAgent
 from hieradoc.agents.parallel_agent import ParallelTreeAgent
 from hieradoc.agents.critic import TreeCriticAgent
 from hieradoc.agents.recursive_tree_parser import RecursiveTreeParserAgent
+from hieradoc.agents.vision_ocr import VisionOCRAgent
 from hieradoc.tools.sandbox import PythonSandbox
 from hieradoc.schemas.query import QueryRequest, QueryResponse, Citation
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __all__ = [
     "HieraDoc",
     "HierarchicalIndexer",
     "RecursiveTreeParserAgent",
+    "VisionOCRAgent",
     "TreeQueryAgent",
     "ParallelTreeAgent",
     "TreeCriticAgent",

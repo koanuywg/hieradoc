@@ -40,7 +40,7 @@ class HierarchicalIndexer:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         code_name = doc_id or p.stem
-        raw_text = FileExtractor.extract_text(str(p))
+        raw_text = FileExtractor.extract_text(str(p), client=self.client, vision_model=self.model)
         return self.index_text(
             raw_text=raw_text,
             doc_id=code_name,
