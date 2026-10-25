@@ -1,0 +1,20 @@
+ENTERPRISE CLOUD HOSTING & SERVICE LEVEL AGREEMENT (SLA)
+Document Code: CLOUD-SLA-2026
+
+PART I: SERVICE COMMITMENTS AND AVAILABILITY
+ARTICLE 1. UPTIME GUARANTEE AND SERVICE CREDIT
+1. Provider guarantees a Monthly Uptime Percentage of at least 99.95% for all production server clusters.
+2. If Provider fails to meet this threshold, Customer shall be entitled to a Service Credit equal to 20% of the monthly fee for availability between 99.0% and 99.94%, and 50% of the monthly fee for availability below 99.0%.
+
+ARTICLE 2. SCHEDULED MAINTENANCE WINDOWS
+1. Scheduled maintenance shall occur exclusively during off-peak hours (between 01:00 AM and 04:00 AM UTC on Sundays).
+2. Provider must give at least 72 hours prior written notice before initiating any non-emergency scheduled maintenance.
+
+PART II: DATA SECURITY AND BACKUP POLICIES
+ARTICLE 3. AUTOMATED BACKUP AND DISASTER RECOVERY
+1. Customer database snapshots are taken automatically every 6 hours and replicated across 3 geographic availability zones.
+2. The Recovery Point Objective (RPO) is guaranteed at 6 hours, and Recovery Time Objective (RTO) is guaranteed at 2 hours.
+
+ARTICLE 4. DATA RETENTION UPON TERMINATION
+1. Upon contract expiration or termination, Customer data shall be preserved for 60 calendar days to allow full export.
+2. After 60 days, all Customer production data will be permanently wiped using DoD 5220.22-M secure sanitization standards.

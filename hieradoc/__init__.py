@@ -4,13 +4,15 @@ from hieradoc.storage.base import BaseTreeStorage
 from hieradoc.storage.sqlite import SQLiteTreeStorage
 from hieradoc.indexer import HierarchicalIndexer
 from hieradoc.agents.query_agent import TreeQueryAgent
+from hieradoc.agents.parallel_agent import ParallelTreeAgent
 from hieradoc.schemas.query import QueryRequest, QueryResponse, Citation
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "HieraDoc",
     "HierarchicalIndexer",
     "TreeQueryAgent",
+    "ParallelTreeAgent",
     "BaseTreeStorage",
     "SQLiteTreeStorage",
     "QueryRequest",
@@ -22,6 +24,7 @@ class HieraDoc:
     """
     Unified High-Level Interface for HieraDoc.
     Provides 3-line indexing and grounded tree-traversal query.
+    Supports both Single-Navigator and Parallel-SubAgent Search modes.
     """
 
     def __init__(
@@ -47,6 +50,7 @@ class HieraDoc:
         self.model = model
         self.indexer = HierarchicalIndexer(storage=self.storage, model=self.model)
         self.agent = TreeQueryAgent(storage=self.storage, model_name=self.model)
+        self.parallel_agent = ParallelTreeAgent(storage=self.storage, model_name=self.model)
 
     def index(
         self,
@@ -61,7 +65,13 @@ class HieraDoc:
             code_name = doc_id or "doc_custom"
             return self.indexer.index_text(file_path_or_text, doc_id=code_name, cluster_title=cluster)
 
-    def query(self, question: str, max_steps: int = 10) -> QueryResponse:
-        """Run an autonomous tree-traversal query with exact line citations."""
+    def query(self, question: str, parallel: bool = True, max_steps: int = 10) -> QueryResponse:
+        """
+        Run an autonomous tree-traversal query with exact line citations.
+        - parallel=True: Dispatches parallel Sub-Agents across candidate branches (fastest, prevents cascade failures).
+        - parallel=False: Uses single sequential navigator agent.
+        """
         req = QueryRequest(query=question, max_steps=max_steps)
+        if parallel:
+            return self.parallel_agent.query(req)
         return self.agent.query(req)
